@@ -8,13 +8,13 @@
 
 | 状态 | 任务 | 备注 |
 |---|---|---|
-| ✅ | 安装 MoonBit 工具链（含 VS Code 插件可选） | 已装：moon 0.1.20260703，位于 `~/.moon/bin`（2026-07-23 验证） |
-| 🔵 | 验证 `moon new / build / test` 跑通 hello world | version 已验证，待跑完整流程 |
-| 🔵 | 确定 GitHub 用户名与仓库名 | 仓库名定为 moonforce；等待用户提供用户名 |
-| ⬜ | 创建公开仓库：LICENSE、README 占位、.gitignore | |
-| ⬜ | 搭建 moon 模块骨架（src/examples/demo 目录） | |
-| ⬜ | 配置 GitHub Actions 最小 CI（moon check + test） | |
-| ⬜ | 注册 mooncakes.io 账号（`moon login`） | 绑定 GitHub |
+| ✅ | 安装 MoonBit 工具链（含 VS Code 插件可选） | moon 0.1.20260703，位于 `~/.moon/bin` |
+| ✅ | 验证 `moon new / build / test` 跑通 | moon check 通过，moon test 跑通（0 tests） |
+| ✅ | 确定 GitHub 用户名与仓库名 | Kai-Junhan/moonforce |
+| ✅ | 创建公开仓库：LICENSE、README、.gitignore | 已推送至 GitHub，带完整 README |
+| ✅ | 搭建 moon 模块骨架 | moon new 生成完整骨架（src/test/cmd/moon.mod） |
+| ✅ | 配置 GitHub Actions 最小 CI（moon check + test） | .github/workflows/ci.yml 已就绪 |
+| ⬜ | 注册 mooncakes.io 账号（`moon login`） | 绑定 GitHub（待 Phase 2 做，发布时才需） |
 
 ## Phase 1：核心移植
 
