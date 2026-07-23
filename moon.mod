@@ -13,11 +13,11 @@ name = "Kai-Junhan/moonforce"
 
 version = "0.1.0"
 
-readme = "README.mbt.md"
+readme = "README.md"
 
 repository = "https://github.com/Kai-Junhan/moonforce"
 
-license = "Apache-2.0"
+license = "ISC"
 
 keywords = [ "force", "layout", "graph", "d3", "simulation", "network" ]
 
