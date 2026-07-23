@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>moonforce — Interactive Force-Directed Graph</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: #64ffda;
+}
+.subtitle {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 16px;
+}
+canvas {
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0d1117;
+  cursor: grab;
+}
+canvas:active { cursor: grabbing; }
+.controls {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+button {
+  background: #64ffda;
+  color: #1a1a2e;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+button:hover { background: #4fd1c5; }
+label { font-size: 0.85rem; color: #aaa; }
+input[type="range"] { width: 120px; }
+.stats {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: #666;
+}
+a { color: #64ffda; text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>moonforce</h1>
+<p class="subtitle">d3-force port for MoonBit — WASM-GC powered force simulation
+  | <a href="https://github.com/Kai-Junhan/moonforce">GitHub</a></p>
+<canvas id="canvas" width="800" height="600"></canvas>
+<div class="controls">
+  <button id="btn-reset">Reset</button>
+  <button id="btn-reheat">Reheat</button>
+  <label>Nodes: <input type="range" id="slider-nodes" min="5" max="100" value="25">
+    <span id="node-count">25</span></label>
+</div>
+<div class="stats" id="stats">Loading WASM...</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const stats = document.getElementById('stats');
+  const slider = document.getElementById('slider-nodes');
+  const nodeCountLabel = document.getElementById('node-count');
+
+  const colors = [
+    '#64ffda', '#ff6b6b', '#ffd93d', '#6bcb77',
+    '#4d96ff', '#ff6f91', '#845ec2', '#ffc75f',
+    '#f9f871', '#ff9671', '#d65db1', '#00c9a7'
+  ];
+
+  let wasm = null;
+  let animId = null;
+  let dragging = -1;
+  let frameCount = 0;
+  let lastTime = performance.now();
+
+  async function loadWasm() {
+    try {
+      const resp = await fetch('./target/wasm-gc/release/build/web/web.wasm');
+      const { instance } = await WebAssembly.instantiateStreaming(resp, {});
+      wasm = instance.exports;
+      stats.textContent = 'Ready';
+      startSimulation(parseInt(slider.value));
+    } catch (e) {
+      stats.textContent = 'WASM load failed: ' + e.message;
+      console.error(e);
+    }
+  }
+
+  function startSimulation(nodeCount) {
+    if (animId) cancelAnimationFrame(animId);
+    wasm.setup(nodeCount);
+    frameCount = 0;
+    lastTime = performance.now();
+    loop();
+  }
+
+  function render() {
+    const nodeCount = wasm.get_node_count();
+    const edgeCount = wasm.get_edge_count();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw edges
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(100, 255, 218, 0.15)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < edgeCount; i++) {
+      const s = wasm.get_edge_source(i);
+      const t = wasm.get_edge_target(i);
+      const x1 = wasm.get_node_x(s);
+      const y1 = wasm.get_node_y(s);
+      const x2 = wasm.get_node_x(t);
+      const y2 = wasm.get_node_y(t);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+    }
+    ctx.stroke();
+
+    // Draw nodes
+    for (let i = 0; i < nodeCount; i++) {
+      const x = wasm.get_node_x(i);
+      const y = wasm.get_node_y(i);
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.fill();
+      if (i === dragging) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+  }
+
+  function loop() {
+    wasm.tick();
+    render();
+
+    frameCount++;
+    const now = performance.now();
+    if (now - lastTime > 1000) {
+      const fps = Math.round(frameCount * 1000 / (now - lastTime));
+      const alpha = wasm.get_alpha().toFixed(4);
+      const n = wasm.get_node_count();
+      stats.textContent = fps + ' fps | ' + n + ' nodes | alpha: ' + alpha;
+      frameCount = 0;
+      lastTime = now;
+    }
+    animId = requestAnimationFrame(loop);
+  }
+
+  // Drag interaction
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    dragging = wasm.find_node(x, y, 20.0);
+    if (dragging >= 0) {
+      wasm.fix_node(dragging, x, y);
+      wasm.reheat();
+    }
+  });
+
+  canvas.addEventListener('mousemove', function(e) {
+    if (dragging >= 0) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      wasm.fix_node(dragging, x, y);
+    }
+  });
+
+  canvas.addEventListener('mouseup', function() {
+    if (dragging >= 0) {
+      wasm.unfix_node(dragging);
+      dragging = -1;
+    }
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    if (dragging >= 0) {
+      wasm.unfix_node(dragging);
+      dragging = -1;
+    }
+  });
+
+  // Touch support for mobile
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    dragging = wasm.find_node(x, y, 30.0);
+    if (dragging >= 0) {
+      wasm.fix_node(dragging, x, y);
+      wasm.reheat();
+    }
+  });
+
+  canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (dragging >= 0) {
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      wasm.fix_node(dragging, x, y);
+    }
+  });
+
+  canvas.addEventListener('touchend', function() {
+    if (dragging >= 0) {
+      wasm.unfix_node(dragging);
+      dragging = -1;
+    }
+  });
+
+  // Controls
+  document.getElementById('btn-reset').addEventListener('click', function() {
+    startSimulation(parseInt(slider.value));
+  });
+
+  document.getElementById('btn-reheat').addEventListener('click', function() {
+    if (wasm) wasm.reheat();
+  });
+
+  slider.addEventListener('input', function(e) {
+    nodeCountLabel.textContent = e.target.value;
+  });
+
+  slider.addEventListener('change', function(e) {
+    startSimulation(parseInt(e.target.value));
+  });
+
+  loadWasm();
+})();
+</script>
+</body>
+</html>
