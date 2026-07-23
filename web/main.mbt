@@ -4,8 +4,14 @@
 
 // FFI: call into JavaScript
 extern "wasm" fn js_set_graph_size(nodes : Int, edges : Int) = "env" "setGraphSize"
+
+///|
 extern "wasm" fn js_set_node(index : Int, x : Double, y : Double) = "env" "setNode"
+
+///|
 extern "wasm" fn js_set_edge(index : Int, src : Int, tgt : Int) = "env" "setEdge"
+
+///|
 extern "wasm" fn js_render() = "env" "render"
 
 ///|
