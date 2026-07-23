@@ -1,6 +1,5 @@
 import {
   "Kai-Junhan/moonforce",
 }
-options(
-  "is-main": true,
-)
+
+pkgtype(kind: "executable")
