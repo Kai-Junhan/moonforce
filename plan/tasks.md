@@ -20,17 +20,17 @@
 
 | 状态 | 任务 | 备注 |
 |---|---|---|
-| ⬜ | 移植 LCG 确定性随机源 + 测试 | 对应 d3-force lcg.js |
-| ⬜ | 移植四叉树（insert/remove/visit/find）+ 测试 | 对应 d3-quadtree |
-| ⬜ | 移植模拟核心（velocity Verlet、alpha 冷却、tick） | 对应 simulation.js/jiggle.js |
-| ⬜ | 移植 forceCenter + 测试 | |
-| ⬜ | 移植 forceCollide + 测试 | 依赖四叉树 |
-| ⬜ | 移植 forceLink + 测试 | |
-| ⬜ | 移植 forceManyBody + 测试 | 依赖四叉树 Barnes-Hut |
-| ⬜ | 移植 forceX / forceY + 测试 | |
-| ⬜ | 移植 forceRadial + 测试 | |
-| ⬜ | 事件机制（tick/end 回调） | 简化版 d3-dispatch |
-| ⬜ | 整理公开 API（包导出、文档注释） | |
+| ✅ | 移植 LCG 确定性随机源 | 对应 d3-force lcg.js |
+| ✅ | 移植四叉树（insert/visit/visitAfter/find） | 对应 d3-quadtree |
+| ✅ | 移植模拟核心（velocity Verlet、alpha 冷却、tick） | 对应 simulation.js |
+| ✅ | 移植 forceCenter | |
+| ✅ | 移植 forceCollide | 依赖四叉树 |
+| ✅ | 移植 forceLink | |
+| ✅ | 移植 forceManyBody | 依赖四叉树 Barnes-Hut |
+| ✅ | 移植 forceX / forceY | |
+| ✅ | 移植 forceRadial | |
+| ✅ | 事件机制（tick/end 回调） | Simulation::set_on_tick / set_on_end |
+| ✅ | 公开 API 类型导出 | Node, ForceConfig, Simulation (pub)，lkg/quadtree pub functions |
 
 ## Phase 2：报名
 

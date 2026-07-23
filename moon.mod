@@ -19,7 +19,7 @@ repository = "https://github.com/Kai-Junhan/moonforce"
 
 license = "Apache-2.0"
 
-keywords = ["force","layout","graph","d3","simulation","network"]
+keywords = [ "force", "layout", "graph", "d3", "simulation", "network" ]
 
 preferred_target = "wasm-gc"
 
