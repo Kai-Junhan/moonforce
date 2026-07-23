@@ -8,25 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `Node::make(~x, ~y)` factory for creating nodes at specific positions
-- `Node::fixed(~x, ~y)` factory for creating fixed-position nodes
-- `Node::fix()` and `Node::unfix()` methods for runtime position fixing
-- `Simulation::find(x, y, radius)` to locate nearest node
-- `Simulation::run()` for one-call convergence
-- `Simulation::init_forces()` to explicitly initialize all registered forces
-- `Simulation::get_alpha()`, `set_alpha()`, `set_alpha_min()`, `set_alpha_target()` accessors
-- `Simulation::get_nodes()` accessor
-- `force_x_advanced`, `force_y_advanced` with configurable strength
-- `force_center_with_strength` with configurable strength parameter
-- `force_collide_advanced` with configurable strength and iterations
-- `force_many_body_advanced` with configurable strength, theta, distance_min, distance_max
-- `force_radial_advanced` with configurable strength
-- `force_link_advanced` accepting `Link` struct array with per-link distance and strength
-- `Link` struct with `Link::make()` and `Link::with_distance()` constructors
-- PORTING.md documenting porting scope, adaptations, and excluded features
-- CHANGELOG.md
-- Comprehensive test suite (40+ tests covering all forces and edge cases)
-- Runnable demo in `cmd/main` demonstrating full simulation workflow
+- Interactive browser demo (`web/`) with Canvas rendering and drag interaction
+- 5 complete example programs (random_graph, tree_layout, radial_layout, grid_layout, cluster)
+- Project proposal document (PROJECT_PROPOSAL.md)
+- Comprehensive README.md with API reference and usage examples
+
+### Fixed
+- `add_force` now calls force init automatically (matches d3-force behavior)
+- LCG uses 32-bit integer arithmetic matching d3-force v3 `| 0` semantics
+- Deprecated `assert_true!`/`assert_false!`/`assert_eq!` replaced with current syntax
+- Read-only field access in blackbox tests (use `Node::make`/`Node::fixed` API)
+- Quadtree test assertion (count includes internal nodes)
+
+### Changed
+- License changed from Apache-2.0 to ISC (matching upstream d3-force)
+- Test suite expanded to 60 tests (34 blackbox + 26 whitebox)
 
 ## [0.1.0] - 2026-07-23
 
@@ -37,5 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quadtree spatial indexing with Barnes-Hut approximation
 - Deterministic LCG random source
 - Phyllotaxis node initialization
+- `Node::make`, `Node::fixed`, `Node::fix()`, `Node::unfix()` API
+- `Simulation::find()`, `Simulation::run()`, `Simulation::init_forces()`
+- `_advanced` variants for all forces with full parameter control
+- `Link` struct with per-link distance/strength configuration
 - Event callbacks (on_tick, on_end)
-- GitHub Actions CI (check, fmt, test)
+- CLI demo in `cmd/main/`
+- GitHub Actions CI (check, fmt, test, build)
+- PORTING.md documenting porting scope and adaptations
