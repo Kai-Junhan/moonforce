@@ -1,5 +1,6 @@
 ///|
 /// Force simulation engine — the core of d3-force port.
+/// Ported from d3-force simulation.js (ISC license, Mike Bostock).
 /// Manages nodes, alpha decay, force iteration, and event dispatch.
 
 ///|
@@ -24,14 +25,15 @@ struct NamedForce {
 pub struct Simulation {
   mut nodes : Array[Node]
   mut alpha : Double
-  alpha_min : Double
+  mut alpha_min : Double
   alpha_decay : Double
-  alpha_target : Double
+  mut alpha_target : Double
   mut velocity_decay : Double
   mut forces : Array[NamedForce]
   mut random : () -> Double
   mut on_tick : (Simulation) -> Unit
   mut on_end : (Simulation) -> Unit
+  mut ended : Bool
 }
 
 ///|
@@ -50,6 +52,7 @@ pub fn Simulation::new(nodes : Array[Node]) -> Simulation {
     random: rng,
     on_tick: fn(_) {  },
     on_end: fn(_) {  },
+    ended: false,
   }
 }
 
@@ -89,10 +92,12 @@ pub fn Simulation::add_force(
   for i = 0; i < n; i = i + 1 {
     if self.forces[i].name == name {
       self.forces[i] = { name, cfg }
+      (cfg.init)(self.nodes, self.random)
       return
     }
   }
   self.forces.push({ name, cfg })
+  (cfg.init)(self.nodes, self.random)
 }
 
 ///|
@@ -128,8 +133,7 @@ pub fn Simulation::tick(self : Simulation, iterations : Int) -> Unit {
         self.nodes[i].x = self.nodes[i].fx
         self.nodes[i].vx = 0.0
       } else {
-        self.nodes[i].x = self.nodes[i].x +
-          self.nodes[i].vx * self.velocity_decay
+        self.nodes[i].x = self.nodes[i].x + self.nodes[i].vx
         self.nodes[i].vx = self.nodes[i].vx * self.velocity_decay
       }
 
@@ -137,8 +141,7 @@ pub fn Simulation::tick(self : Simulation, iterations : Int) -> Unit {
         self.nodes[i].y = self.nodes[i].fy
         self.nodes[i].vy = 0.0
       } else {
-        self.nodes[i].y = self.nodes[i].y +
-          self.nodes[i].vy * self.velocity_decay
+        self.nodes[i].y = self.nodes[i].y + self.nodes[i].vy
         self.nodes[i].vy = self.nodes[i].vy * self.velocity_decay
       }
 
@@ -152,7 +155,10 @@ pub fn Simulation::tick(self : Simulation, iterations : Int) -> Unit {
     }
 
     // End condition
-    // (on_end triggers only when alpha < alpha_min; we fire it in the loop or externally)
+    if self.alpha < self.alpha_min && !self.ended {
+      self.ended = true
+      (self.on_end)(self)
+    }
   }
   (self.on_tick)(self)
 }
@@ -179,6 +185,7 @@ pub fn Simulation::set_on_end(
 /// Restart the simulation from alpha = 1.
 pub fn Simulation::restart(self : Simulation) -> Unit {
   self.alpha = 1.0
+  self.ended = false
 }
 
 ///|
@@ -203,7 +210,77 @@ pub fn Simulation::set_random(self : Simulation, rng : () -> Double) -> Unit {
 }
 
 ///|
-/// Scale velocity decay (matching d3's velocityDecay setter: internal decay = 1 - v).
 pub fn Simulation::set_velocity_decay_d3(self : Simulation, v : Double) -> Unit {
   self.velocity_decay = 1.0 - v
+}
+
+///|
+pub fn Simulation::get_alpha(self : Simulation) -> Double {
+  self.alpha
+}
+
+///|
+pub fn Simulation::set_alpha(self : Simulation, a : Double) -> Unit {
+  self.alpha = a
+}
+
+///|
+pub fn Simulation::set_alpha_min(self : Simulation, v : Double) -> Simulation {
+  self.alpha_min = v
+  self
+}
+
+///|
+pub fn Simulation::set_alpha_target(
+  self : Simulation,
+  v : Double,
+) -> Simulation {
+  self.alpha_target = v
+  self
+}
+
+///|
+pub fn Simulation::get_nodes(self : Simulation) -> Array[Node] {
+  self.nodes
+}
+
+///|
+pub fn Simulation::find(
+  self : Simulation,
+  x : Double,
+  y : Double,
+  radius : Double,
+) -> Int {
+  let n = self.nodes.length()
+  let mut best = -1
+  let mut best_d2 = radius * radius
+  for i = 0; i < n; i = i + 1 {
+    let dx = self.nodes[i].x - x
+    let dy = self.nodes[i].y - y
+    let d2 = dx * dx + dy * dy
+    if d2 < best_d2 {
+      best_d2 = d2
+      best = i
+    }
+  }
+  best
+}
+
+///|
+pub fn Simulation::run(self : Simulation) -> Unit {
+  let max_iterations = 300
+  for k = 0; k < max_iterations; k = k + 1 {
+    self.tick(1)
+    if self.alpha < self.alpha_min {
+      break
+    }
+  }
+}
+
+///|
+pub fn Simulation::init_forces(self : Simulation) -> Unit {
+  let n = self.forces.length()
+  for i = 0; i < n; i = i + 1 {
+    (self.forces[i].cfg.init)(self.nodes, self.random)
+  }
 }

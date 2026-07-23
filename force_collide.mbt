@@ -2,10 +2,21 @@
 /// Force collide: prevents node overlap using collision detection.
 /// Uses quadtree for efficient collision detection.
 /// Ported from d3-force collide.js (ISC license, Mike Bostock).
+
+///|
 pub fn force_collide(radius? : Double = 1.0) -> ForceConfig {
+  force_collide_advanced(radius~, strength=1.0, iterations=1)
+}
+
+///|
+pub fn force_collide_advanced(
+  radius? : Double = 1.0,
+  strength? : Double = 1.0,
+  iterations? : Int = 1,
+) -> ForceConfig {
   let radius_val = radius
-  let strength_val = 1.0
-  let iterations_val = 1
+  let strength_val = strength
+  let iterations_val = iterations
   let mut nodes : Array[Node] = Array::new()
   let mut radii : Array[Double] = Array::new()
   let mut rng : () -> Double = fn() -> Double { 0.0 }
@@ -29,7 +40,6 @@ pub fn force_collide(radius? : Double = 1.0) -> ForceConfig {
           nodes[i].y + nodes[i].vy
         })
 
-        // post-order: compute max radii per quad node
         visit_after(qt, fn(qt2, idx) {
           if qt2.is_leaf[idx] {
             let data_idx = qt2.data[idx]
@@ -64,7 +74,6 @@ pub fn force_collide(radius? : Double = 1.0) -> ForceConfig {
           }
         })
 
-        // visit: collision check per node
         for i = 0; i < n_len; i = i + 1 {
           let node_ri = radii[i]
           let node_ri2 = node_ri * node_ri
@@ -103,7 +112,6 @@ pub fn force_collide(radius? : Double = 1.0) -> ForceConfig {
               }
               return true
             }
-            // internal node bbox check
             let r2 = node_ri + qt2.r[qidx]
             if qt2.x1[qidx] < xi - r2 || qt2.x0[qidx] > xi + r2 {
               return true

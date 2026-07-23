@@ -12,6 +12,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: moonbitlang/setup-moonbit@v1
-      - run: moon check
-      - run: moon fmt --check
-      - run: moon test
+      - name: Check
+        run: moon check
+      - name: Format check
+        run: moon fmt --check
+      - name: Test
+        run: moon test
+      - name: Build demo
+        run: moon build cmd/main
+      - name: Build examples
+        run: |
+          moon build examples/random_graph
+          moon build examples/tree_layout
+          moon build examples/radial_layout
+          moon build examples/grid_layout
+          moon build examples/cluster

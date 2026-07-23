@@ -1,22 +1,38 @@
 ///|
 /// Force many-body: N-body charge simulation using Barnes-Hut approximation.
 /// Ported from d3-force manyBody.js (ISC license, Mike Bostock).
+
+///|
 pub fn force_many_body() -> ForceConfig {
+  force_many_body_advanced(
+    strength=-30.0,
+    theta=0.9,
+    distance_min=1.0,
+    distance_max=1000000.0,
+  )
+}
+
+///|
+pub fn force_many_body_advanced(
+  strength? : Double = -30.0,
+  theta? : Double = 0.9,
+  distance_min? : Double = 1.0,
+  distance_max? : Double = 1000000.0,
+) -> ForceConfig {
   let mut nodes : Array[Node] = Array::new()
   let mut strengths : Array[Double] = Array::new()
   let mut rng : () -> Double = fn() -> Double { 0.0 }
   let mut alpha_val : Double = 0.0
-  let strength_fn_val : Double = -30.0
-  let distance_min2 : Double = 1.0
-  let distance_max2 : Double = 1000000000000.0
-  let theta2 : Double = 0.81
+  let distance_min2 : Double = distance_min * distance_min
+  let distance_max2 : Double = distance_max * distance_max
+  let theta2 : Double = theta * theta
 
   {
     init: fn(n, random) {
       nodes = n
       rng = random
       let n_len = n.length()
-      strengths = Array::makei(n_len, fn(_) { strength_fn_val })
+      strengths = Array::makei(n_len, fn(_) { strength })
     },
     apply: fn(alpha) {
       let n_len = nodes.length()
@@ -29,7 +45,6 @@ pub fn force_many_body() -> ForceConfig {
         nodes[i].y
       })
 
-      // Post-order: accumulate strength and center-of-mass for each quad node
       visit_after(qt, fn(qt2, idx) {
         if qt2.is_leaf[idx] {
           let data_idx = qt2.data[idx]
@@ -91,7 +106,6 @@ pub fn force_many_body() -> ForceConfig {
         }
       })
 
-      // Visit: apply forces with Barnes-Hut approximation
       for i = 0; i < n_len; i = i + 1 {
         let node_x = nodes[i].x
         let node_y = nodes[i].y
@@ -105,7 +119,6 @@ pub fn force_many_body() -> ForceConfig {
           let l = qx * qx + qy * qy
           let w = qt2.x1[idx] - qt2.x0[idx]
 
-          // Barnes-Hut condition
           if w * w / theta2 < l {
             if l < distance_max2 {
               let mut qqx = qx
@@ -129,7 +142,6 @@ pub fn force_many_body() -> ForceConfig {
             return true
           }
 
-          // Direct leaf processing
           if qt2.is_leaf[idx] || l >= distance_max2 {
             if qt2.is_leaf[idx] {
               let data_idx = qt2.data[idx]
@@ -150,7 +162,6 @@ pub fn force_many_body() -> ForceConfig {
                 }
                 let f = alpha_val / ll
 
-                // Walk coincident list
                 let mut cur_idx = idx
                 let mut first = true
                 while first || cur_idx != idx {

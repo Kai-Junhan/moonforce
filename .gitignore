@@ -1,2 +1,6 @@
 _build/
 .moon/
+*.wasm
+*.wasm.map
+target/
+cmd/main/moon.pkg.json

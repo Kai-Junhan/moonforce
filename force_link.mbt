@@ -1,8 +1,40 @@
 ///|
 /// Force link: spring-like connections between nodes.
 /// Ported from d3-force link.js (ISC license, Mike Bostock).
+
+///|
+pub struct Link {
+  source : Int
+  target : Int
+  distance : Double
+  strength : Double
+}
+
+///|
+pub fn Link::make(source : Int, target : Int) -> Link {
+  { source, target, distance: 30.0, strength: -1.0 }
+}
+
+///|
+pub fn Link::with_distance(
+  source : Int,
+  target : Int,
+  distance : Double,
+) -> Link {
+  { source, target, distance, strength: -1.0 }
+}
+
+///|
 pub fn force_link(links_arr : Array[(Int, Int)]) -> ForceConfig {
-  let links : Array[(Int, Int)] = links_arr
+  let link_objs : Array[Link] = Array::makei(links_arr.length(), fn(i) {
+    let (s, t) = links_arr[i]
+    Link::make(s, t)
+  })
+  force_link_advanced(link_objs)
+}
+
+///|
+pub fn force_link_advanced(links : Array[Link]) -> ForceConfig {
   let mut nodes : Array[Node] = Array::new()
   let mut strengths : Array[Double] = Array::new()
   let mut distances : Array[Double] = Array::new()
@@ -23,23 +55,28 @@ pub fn force_link(links_arr : Array[(Int, Int)]) -> ForceConfig {
 
       count = Array::makei(n_nodes, fn(_) { 0 })
       for i = 0; i < m; i = i + 1 {
-        let (s, t) = links[i]
-        count[s] = count[s] + 1
-        count[t] = count[t] + 1
+        count[links[i].source] = count[links[i].source] + 1
+        count[links[i].target] = count[links[i].target] + 1
       }
 
       bias = Array::makei(m, fn(i) {
-        let (s, t) = links[i]
+        let s = links[i].source
+        let t = links[i].target
         count[s].to_double() / (count[s] + count[t]).to_double()
       })
 
       strengths = Array::makei(m, fn(i) {
-        let (s, t) = links[i]
-        let min_count = if count[s] < count[t] { count[s] } else { count[t] }
-        1.0 / min_count.to_double()
+        if links[i].strength >= 0.0 {
+          links[i].strength
+        } else {
+          let s = links[i].source
+          let t = links[i].target
+          let min_count = if count[s] < count[t] { count[s] } else { count[t] }
+          1.0 / min_count.to_double()
+        }
       })
 
-      distances = Array::makei(m, fn(_) { 30.0 })
+      distances = Array::makei(m, fn(i) { links[i].distance })
     },
     apply: fn(alpha) {
       let m = links.length()
@@ -48,7 +85,8 @@ pub fn force_link(links_arr : Array[(Int, Int)]) -> ForceConfig {
       }
       for k = 0; k < iterations; k = k + 1 {
         for i = 0; i < m; i = i + 1 {
-          let (s, t) = links[i]
+          let s = links[i].source
+          let t = links[i].target
           let sn = nodes[s]
           let tn = nodes[t]
           let mut x = tn.x + tn.vx - sn.x - sn.vx

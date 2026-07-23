@@ -1,8 +1,17 @@
 ///|
 /// Force X: pushes nodes toward a specific x-coordinate.
 /// Ported from d3-force x.js (ISC license, Mike Bostock).
+
+///|
 pub fn force_x(x? : Double = 0.0) -> ForceConfig {
-  let strength = 0.1
+  force_x_advanced(x~, strength=0.1)
+}
+
+///|
+pub fn force_x_advanced(
+  x? : Double = 0.0,
+  strength? : Double = 0.1,
+) -> ForceConfig {
   let mut nodes : Array[Node] = Array::new()
   let mut xz : Array[Double] = Array::new()
   let mut strengths : Array[Double] = Array::new()

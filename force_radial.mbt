@@ -1,12 +1,23 @@
 ///|
 /// Force radial: pushes nodes toward or away from a circle of given radius.
 /// Ported from d3-force radial.js (ISC license, Mike Bostock).
+
+///|
 pub fn force_radial(
   radius? : Double = 0.0,
   x? : Double = 0.0,
   y? : Double = 0.0,
 ) -> ForceConfig {
-  let strength = 0.1
+  force_radial_advanced(radius~, x~, y~, strength=0.1)
+}
+
+///|
+pub fn force_radial_advanced(
+  radius? : Double = 0.0,
+  x? : Double = 0.0,
+  y? : Double = 0.0,
+  strength? : Double = 0.1,
+) -> ForceConfig {
   let mut nodes : Array[Node] = Array::new()
   let mut radiuses : Array[Double] = Array::new()
   let mut strengths : Array[Double] = Array::new()

@@ -1,8 +1,17 @@
 ///|
 /// Force Y: pushes nodes toward a specific y-coordinate.
 /// Ported from d3-force y.js (ISC license, Mike Bostock).
+
+///|
 pub fn force_y(y? : Double = 0.0) -> ForceConfig {
-  let strength = 0.1
+  force_y_advanced(y~, strength=0.1)
+}
+
+///|
+pub fn force_y_advanced(
+  y? : Double = 0.0,
+  strength? : Double = 0.1,
+) -> ForceConfig {
   let mut nodes : Array[Node] = Array::new()
   let mut yz : Array[Double] = Array::new()
   let mut strengths : Array[Double] = Array::new()

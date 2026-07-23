@@ -1,8 +1,18 @@
 ///|
 /// Force center: pulls nodes toward a central position.
 /// Ported from d3-force center.js (ISC license, Mike Bostock).
+
+///|
 pub fn force_center(x? : Double = 0.0, y? : Double = 0.0) -> ForceConfig {
-  let strength = 1.0
+  force_center_with_strength(x~, y~, strength=1.0)
+}
+
+///|
+pub fn force_center_with_strength(
+  x? : Double = 0.0,
+  y? : Double = 0.0,
+  strength? : Double = 1.0,
+) -> ForceConfig {
   let mut nodes : Array[Node] = Array::new()
   {
     init: fn(n, _random) { nodes = n },

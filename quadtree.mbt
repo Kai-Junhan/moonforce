@@ -326,27 +326,66 @@ fn visit_rec(qt : QuadTree, idx : Int, f : (QuadTree, Int) -> Bool) -> Unit {
 }
 
 ///|
-/// Find nearest node to (x, y) within radius squared.
-/// Returns node index, or -1 if none found.
-pub fn find(qt : QuadTree, x : Double, y : Double, radius2 : Double) -> Int {
-  // Simplified: linear scan over all leaves
-  // Full quadtree-based nearest search can be added later
+/// Find nearest node to (x, y) within radius, using quadtree-accelerated search.
+/// Returns node index, or -1 if none found within radius.
+pub fn find(qt : QuadTree, x : Double, y : Double, radius : Double) -> Int {
+  let rad2 = radius * radius
   let mut best_idx = -1
-  let mut best_d2 = radius2
-  let n = qt.count
-  for i = 0; i < n; i = i + 1 {
-    if qt.is_leaf[i] {
-      let mut idx = i
-      while idx != -1 {
-        let dx = x - qt.x0[idx]
-        let dy = y - qt.y0[idx]
-        let d2 = dx * dx + dy * dy
-        if d2 < best_d2 {
-          best_d2 = d2
-          best_idx = qt.data[idx]
+  let mut best_d2 = rad2
+  if qt.root == -1 {
+    return best_idx
+  }
+
+  let stack_cap = qt.count * 2 + 10
+  let stack = Array::makei(stack_cap, fn(_) { -1 })
+  let mut sp = 0
+
+  stack[sp] = qt.root
+  sp = sp + 1
+
+  while sp > 0 {
+    sp = sp - 1
+    let idx = stack[sp]
+    let nx0 = qt.x0[idx]
+    let ny0 = qt.y0[idx]
+    let nx1 = qt.x1[idx]
+    let ny1 = qt.y1[idx]
+
+    let dx = if x < nx0 { nx0 - x } else if x > nx1 { x - nx1 } else { 0.0 }
+    let dy = if y < ny0 { ny0 - y } else if y > ny1 { y - ny1 } else { 0.0 }
+    if dx * dx + dy * dy < best_d2 {
+      if qt.is_leaf[idx] {
+        let mut leaf_idx = idx
+        while leaf_idx != -1 {
+          let dx2 = qt.x0[leaf_idx] - x
+          let dy2 = qt.y0[leaf_idx] - y
+          let d2 = dx2 * dx2 + dy2 * dy2
+          if d2 < best_d2 {
+            best_d2 = d2
+            best_idx = qt.data[leaf_idx]
+          }
+          leaf_idx = qt.next[leaf_idx]
         }
-        idx = qt.next[idx]
+      } else {
+        if qt.se[idx] != -1 {
+          stack[sp] = qt.se[idx]
+          sp = sp + 1
+        }
+        if qt.sw[idx] != -1 {
+          stack[sp] = qt.sw[idx]
+          sp = sp + 1
+        }
+        if qt.ne[idx] != -1 {
+          stack[sp] = qt.ne[idx]
+          sp = sp + 1
+        }
+        if qt.nw[idx] != -1 {
+          stack[sp] = qt.nw[idx]
+          sp = sp + 1
+        }
       }
+    } else {
+
     }
   }
   best_idx
