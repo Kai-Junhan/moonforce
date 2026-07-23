@@ -1,0 +1,7 @@
+// import {
+//   "Kai-Junhan/moonforce" @lib,
+// }
+
+options(
+  "is-main": true,
+)
