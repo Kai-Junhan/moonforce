@@ -98,7 +98,20 @@ a:hover { text-decoration: underline; }
 
   async function loadWasm() {
     try {
-      const resp = await fetch('./target/wasm-gc/release/build/web/web.wasm');
+      // Try multiple possible paths for the WASM file
+      const paths = [
+        '../target/wasm-gc/release/build/web/web.wasm',
+        './web.wasm',
+        '../_build/wasm-gc/release/build/web/web.wasm'
+      ];
+      let resp = null;
+      for (const path of paths) {
+        try {
+          resp = await fetch(path);
+          if (resp.ok) break;
+        } catch (e) { continue; }
+      }
+      if (!resp || !resp.ok) throw new Error('WASM file not found');
       const { instance } = await WebAssembly.instantiateStreaming(resp, {});
       wasm = instance.exports;
       stats.textContent = 'Ready';
